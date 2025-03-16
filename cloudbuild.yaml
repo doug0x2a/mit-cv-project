@@ -1,0 +1,9 @@
+steps:
+- name: 'gcr.io/cloud-builders/docker'
+  script: |
+    docker build -t gcr.io/mit-cv-project/github.com/doug0x2a/mit-cv-project:$COMMIT_SHA .
+  automapSubstitutions: true
+options:
+  logging: CLOUD_LOGGING_ONLY
+images:
+- 'gcr.io/mit-cv-project/github.com/doug0x2a/mit-cv-project:$COMMIT_SHA'

@@ -19,5 +19,5 @@ COPY ./shared /code/shared
 EXPOSE 80
 
 # run server
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "80"]
+CMD exec uvicorn app.main:app --host 0.0.0.0 --port $PORT
 
