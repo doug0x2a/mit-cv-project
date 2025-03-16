@@ -5,8 +5,8 @@ FROM python:3.12
 WORKDIR /code
 
 # install dependencies
-COPY requirements.txt .
-RUN pip install --no-cache-dir --upgrade -r requirements.txt
+COPY ./requirements.txt /code/requirements.txt
+RUN pip install --no-cache-dir --upgrade -r /code/requirements.txt
 
 # Download and cache the pretrained model
 RUN python -c "import torch; import torchvision.models as models; models.densenet121(pretrained=True)"

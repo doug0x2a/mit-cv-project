@@ -18,7 +18,6 @@ scaler_path = os.path.join(base_dir, "models", "scaler.joblib")
 scaler = joblib.load(scaler_path)
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-# device = torch.device("cpu")
 
 # Tabular Model
 tabular_model_path = os.path.join(base_dir, "models", "tabular-model.pt")

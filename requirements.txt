@@ -1,0 +1,8 @@
+fastapi==0.115.11
+torch==2.3.1
+torchvision==0.18.1
+uvicorn==0.34.0
+joblib==1.4.2
+scikit-learn==1.5.0
+python-multipart==0.0.20
+pandas==2.2.2
