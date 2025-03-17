@@ -54,6 +54,9 @@ def home():
 
 @app.get("/device")
 def get_device():
+    """
+    Get the device (CPU or GPU) that the model is currently running on
+    """
     return device.type
 
 def convert_tabular_to_tensor(tabular:str) -> torch.Tensor:
