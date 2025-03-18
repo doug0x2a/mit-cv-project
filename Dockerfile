@@ -8,16 +8,19 @@ WORKDIR /code
 COPY ./requirements.txt /code/requirements.txt
 RUN pip install --no-cache-dir --upgrade -r /code/requirements.txt
 
-# Download and cache the pretrained model
-RUN python -c "import torch; import torchvision.models as models; models.densenet121(weights=models.DenseNet121_Weights.IMAGENET1K_V1)"
-
 # copy project
 COPY ./app /code/app
 COPY ./shared /code/shared
 
+# Add User
+RUN useradd -m myuser
+USER myuser
+
+# Download and cache the pretrained model
+RUN python -c "import torch; import torchvision.models as models; models.densenet121(weights=models.DenseNet121_Weights.IMAGENET1K_V1)"
+
 # expose port
-EXPOSE 80
+EXPOSE $PORT
 
 # run server
 CMD exec uvicorn app.main:app --host 0.0.0.0 --port $PORT
-

@@ -1,7 +1,7 @@
 from typing import Dict
 from fastapi import FastAPI, Form, HTTPException, UploadFile, File
 from shared.my_models import ImageModel, ConcatModel
-from PIL import Image
+from PIL import Image, UnidentifiedImageError
 import pandas as pd
 import json
 import torch
@@ -49,8 +49,15 @@ transform = transforms.Compose([
 app = FastAPI()
 
 @app.get("/")
-def home():
+async def home():
     return "Congratulations! Your API is working as expected. Now head over to <your_server>/docs"
+
+@app.get("/ping")
+async def ping():
+    """
+    Check if the API is running
+    """
+    return {"status": "ok"}
 
 @app.get("/device")
 def get_device():
@@ -79,6 +86,11 @@ def convert_tabular_to_tensor(tabular:str) -> torch.Tensor:
     if extra_cols:
         raise HTTPException(status_code=400, detail=f"Unexpected columns: {extra_cols}")
     
+    # check that all values are floats or ints
+    for col, val in tabular_dict.items():
+        if not isinstance(val, (int, float)):
+            raise HTTPException(status_code=400, detail=f"Invalid value for {col}: {val}")
+    
     tabular_df = pd.DataFrame([tabular_dict], columns=TABULAR_DATA_COLUMNS)
     tabular_scaled = scaler.transform(tabular_df)
     tabular_tensor = torch.tensor(tabular_scaled).float().to(device)
@@ -98,6 +110,21 @@ async def predict_tabular(tabular: str = Form(...)):
 
     return {"probabilities": {"pneumonia": pneumonia_prob}}
 
+async def load_image_from_uploadfile(file: UploadFile) -> Image.Image:
+    """
+    Reads an uploaded file and converts it to a PIL RGB Image.
+    Raises HTTPException if the file is not a valid image.
+    """
+    try:
+        contents = await file.read()
+        image = Image.open(io.BytesIO(contents)).convert("RGB")
+        return image
+    except UnidentifiedImageError:
+        raise HTTPException(status_code=400, detail="Uploaded file is not a valid image.")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error processing image: {str(e)}")
+
+
 
 @app.post("/predict-image")
 async def predict_image(file: UploadFile = File(...)):
@@ -106,11 +133,7 @@ async def predict_image(file: UploadFile = File(...)):
     - **file**: UploadFile = File(...) - A file to upload
     """
 
-    # Read image bytes (sync)
-    contents = await file.read()
-
-    # Open image with PIL
-    image = Image.open(io.BytesIO(contents)).convert("RGB")
+    image = await load_image_from_uploadfile(file)
 
     # Preprocess the image
     image_tensor = transform(image).unsqueeze(0).to(device)
@@ -131,11 +154,7 @@ async def predict_combined(file: UploadFile = File(...), tabular: str = Form(...
     """
     tabular_tensor = convert_tabular_to_tensor(tabular)
 
-    # Read image bytes (sync)
-    contents = await file.read()
-
-    # Open image with PIL
-    image = Image.open(io.BytesIO(contents)).convert("RGB")
+    image = await load_image_from_uploadfile(file)
 
     # Preprocess the image
     image_tensor = transform(image).unsqueeze(0).to(device)
